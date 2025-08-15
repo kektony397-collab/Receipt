@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Receipt, ReceiptItem } from '../types';
 import { db, calculateTotal } from '../services/db';
 import { useLocalization } from '../hooks/useLocalization';
@@ -33,9 +33,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
     
     const [currentReceipt, setCurrentReceipt] = useState<Receipt>(receipt || initialReceiptState);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const receiptPreviewRef = React.useRef<HTMLDivElement>(null);
+    const pdfReceiptRef = useRef<HTMLDivElement>(null);
 
-    const inputFieldClasses = "w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500";
+    const inputFieldClasses = "w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors";
     const inputFieldDisabledClasses = "w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
     
     useEffect(() => {
@@ -64,6 +64,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
     };
 
     const removeItem = (id: string) => {
+        if (currentReceipt.items.length <= 1) return;
         setCurrentReceipt(prev => ({
             ...prev,
             items: prev.items.filter(item => item.id !== id)
@@ -71,6 +72,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
     };
 
     const handleSave = async () => {
+        if (!currentReceipt.customerName) return;
         if (currentReceipt.id) {
             const { id, ...dataToUpdate } = currentReceipt;
             await db.receipts.update(id, dataToUpdate);
@@ -81,7 +83,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
     };
 
     const handleDownloadPdf = async () => {
-        const element = receiptPreviewRef.current;
+        const element = pdfReceiptRef.current;
         if (!element) return;
         
         const canvas = await html2canvas(element, { scale: 2 });
@@ -99,9 +101,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
     const subtotal = useMemo(() => currentReceipt.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0), [currentReceipt.items]);
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl">
-                <h2 className={`text-3xl font-bold mb-6 ${language === 'gu' ? 'font-gujarati' : ''}`}>{receipt ? t('edit') : t('newReceipt')}</h2>
+        <div className="p-4 md:p-8 max-w-5xl mx-auto">
+            <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl shadow-xl">
+                <h2 className={`text-3xl font-bold font-poppins mb-8 ${language === 'gu' ? 'font-gujarati' : ''}`}>{receipt ? t('edit') : t('newReceipt')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('receiptId')}</label>
@@ -122,22 +124,22 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
                 </div>
 
                 <div className="mt-8">
-                    <h3 className={`text-xl font-bold mb-4 ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('items')}</h3>
+                    <h3 className={`text-xl font-bold mb-4 font-poppins ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('items')}</h3>
                     <div className="space-y-4">
-                        {currentReceipt.items.map((item, index) => (
+                        {currentReceipt.items.map((item) => (
                             <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
-                                <input type="text" placeholder={t('description')} value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className={`${inputFieldClasses} col-span-5`} />
-                                <input type="number" placeholder={t('quantity')} value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className={`${inputFieldClasses} col-span-2`} />
-                                <input type="number" placeholder={t('unitPrice')} value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', e.target.value)} className={`${inputFieldClasses} col-span-3`} />
-                                <div className="col-span-1 text-right font-medium">{(item.quantity * item.unitPrice).toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US')}</div>
-                                <button onClick={() => removeItem(item.id)} className="col-span-1 text-red-500 hover:text-red-700"><Icon name="delete" /></button>
+                                <input type="text" placeholder={t('description')} value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className={`${inputFieldClasses} col-span-12 md:col-span-5`} />
+                                <input type="number" placeholder={t('quantity')} value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className={`${inputFieldClasses} col-span-4 md:col-span-2`} />
+                                <input type="number" placeholder={t('unitPrice')} value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', e.target.value)} className={`${inputFieldClasses} col-span-5 md:col-span-3`} />
+                                <div className="col-span-2 md:col-span-1 text-right font-medium">{(item.quantity * item.unitPrice).toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US')}</div>
+                                <button onClick={() => removeItem(item.id)} className="col-span-1 text-red-500 hover:text-red-700 disabled:opacity-50" disabled={currentReceipt.items.length <= 1}><Icon name="delete" /></button>
                             </div>
                         ))}
                     </div>
-                    <button onClick={addItem} className={`mt-4 flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold ${language === 'gu' ? 'font-gujarati' : ''}`}><Icon name="add_circle" /> {t('addItem')}</button>
+                    <button onClick={addItem} className={`mt-4 flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}><Icon name="add_circle" /> {t('addItem')}</button>
                 </div>
                 
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                      <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('paymentMethod')}</label>
                         <select name="paymentMethod" value={currentReceipt.paymentMethod} onChange={handleChange} className={inputFieldClasses}>
@@ -149,39 +151,40 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({ receipt, onSave, onCancel }) 
                         <textarea name="notes" value={currentReceipt.notes} onChange={handleChange} className={`${inputFieldClasses} h-24`}></textarea>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2 text-lg">
+                    <div className="flex flex-col items-end gap-2 text-md">
                         <div className="flex justify-between w-full max-w-xs"><span>{t('subtotal')}:</span><span>{subtotal.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span></div>
                         <div className="flex justify-between items-center w-full max-w-xs">
                              <label htmlFor="taxRate">{t('taxRate')}:</label>
-                             <input type="number" id="taxRate" name="taxRate" value={currentReceipt.taxRate} onChange={handleChange} className={`${inputFieldClasses} w-20 text-right`} />
+                             <input type="number" id="taxRate" name="taxRate" value={currentReceipt.taxRate} onChange={handleChange} className={`${inputFieldClasses} w-24 text-right`} />
                         </div>
                          <div className="flex justify-between items-center w-full max-w-xs">
                              <label htmlFor="discount">{t('discount')}:</label>
-                             <input type="number" id="discount" name="discount" value={currentReceipt.discount} onChange={handleChange} className={`${inputFieldClasses} w-20 text-right`} />
+                             <input type="number" id="discount" name="discount" value={currentReceipt.discount} onChange={handleChange} className={`${inputFieldClasses} w-24 text-right`} />
                         </div>
                         <div className="flex justify-between w-full max-w-xs mt-2 pt-2 border-t border-slate-300 dark:border-slate-600 font-bold text-2xl"><span>{t('grandTotal')}:</span><span>{total.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span></div>
                     </div>
                 </div>
 
-                <div className="mt-8 flex justify-end gap-4">
-                    <button onClick={onCancel} className={`px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('cancel')}</button>
-                    <button onClick={() => setIsPreviewOpen(true)} className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 ${language === 'gu' ? 'font-gujarati' : ''}`}><Icon name="visibility"/> Preview & PDF</button>
-                    <button onClick={handleSave} className={`px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('save')}</button>
+                <div className="mt-8 flex flex-wrap justify-end gap-4">
+                    <button onClick={onCancel} className={`px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('cancel')}</button>
+                    <button onClick={() => setIsPreviewOpen(true)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 font-semibold transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}><Icon name="visibility"/> Preview & PDF</button>
+                    <button onClick={handleSave} className={`px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('save')}</button>
                 </div>
             </div>
             
-            <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} title={t('receiptDetails')}>
-                <div className="max-h-[70vh] overflow-y-auto">
-                    {profile && <ReceiptView ref={receiptPreviewRef} receipt={currentReceipt} profile={profile} language={language} isForPdf={false} />}
+            <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} title={t('receiptDetails')} size="xl">
+                <div className="max-h-[70vh] overflow-y-auto bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl">
+                    {profile && <ReceiptView receipt={currentReceipt} profile={profile} language={language} isForPdf={false} />}
                 </div>
                 <div className="mt-6 flex justify-end">
-                    <button onClick={handleDownloadPdf} className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 ${language === 'gu' ? 'font-gujarati' : ''}`}><Icon name="picture_as_pdf"/> Download PDF</button>
-                </div>
-                {/* Hidden element for PDF generation with fixed width */}
-                 <div className="hidden">
-                    {profile && <ReceiptView ref={receiptPreviewRef} receipt={currentReceipt} profile={profile} language={language} isForPdf={true} />}
+                    <button onClick={handleDownloadPdf} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 font-semibold transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}><Icon name="picture_as_pdf"/> Download PDF</button>
                 </div>
             </Modal>
+            
+            {/* Hidden element for accurate PDF generation */}
+            <div className="absolute -left-[9999px] top-0">
+                {profile && <ReceiptView ref={pdfReceiptRef} receipt={currentReceipt} profile={profile} language={language} isForPdf={true} />}
+            </div>
         </div>
     );
 };

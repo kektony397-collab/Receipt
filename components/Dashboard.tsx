@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, calculateTotal } from '../services/db';
@@ -9,11 +8,14 @@ import { useLocalization } from '../hooks/useLocalization';
 import Icon from './common/Icon';
 import Modal from './common/Modal';
 import AdminPanel from './AdminPanel';
+import FAB from './common/FAB';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Dashboard: React.FC = () => {
     const [currentView, setCurrentView] = useState<'list' | 'form' | 'admin'>('list');
     const [editingReceipt, setEditingReceipt] = useState<Receipt | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [dateFilter, setDateFilter] = useState('');
     const [selectedReceipts, setSelectedReceipts] = useState<Set<number>>(new Set());
     const [receiptToDelete, setReceiptToDelete] = useState<Receipt | null>(null);
@@ -24,16 +26,16 @@ const Dashboard: React.FC = () => {
 
     const filteredReceipts = useMemo(() => {
         return (allReceipts || []).filter(receipt => {
-            const matchesSearch = searchTerm.length === 0 ||
-                receipt.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                receipt.receiptId.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = debouncedSearchTerm.length === 0 ||
+                receipt.customerName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                receipt.receiptId.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
             
             const matchesDate = dateFilter.length === 0 ||
-                new Date(receipt.date).toLocaleDateString().includes(new Date(dateFilter).toLocaleDateString());
+                new Date(receipt.date).toLocaleDateString() === new Date(dateFilter).toLocaleDateString();
 
             return matchesSearch && matchesDate;
         });
-    }, [allReceipts, searchTerm, dateFilter]);
+    }, [allReceipts, debouncedSearchTerm, dateFilter]);
 
     const handleNewReceipt = () => {
         setEditingReceipt(null);
@@ -88,42 +90,34 @@ const Dashboard: React.FC = () => {
 
     const renderListView = () => (
         <div className="p-4 md:p-8">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className={`text-3xl font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('receiptList')}</h2>
-                <button
-                    onClick={handleNewReceipt}
-                    className={`flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}
-                >
-                    <Icon name="add" />
-                    {t('newReceipt')}
-                </button>
-            </div>
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg mb-6">
+            <h2 className={`text-3xl font-bold font-poppins mb-6 ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('receiptList')}</h2>
+            
+            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-3xl shadow-lg shadow-slate-200/50 dark:shadow-black/20 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <input
                         type="text"
                         placeholder={t('searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                      <input
                         type="date"
                         value={dateFilter}
                         onChange={(e) => setDateFilter(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-                <div className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                <div className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                     Showing {filteredReceipts.length} receipts — Sum: {aggregatedTotal.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}
                 </div>
             </div>
 
-            <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+            <div className="overflow-x-auto bg-white dark:bg-slate-800/50 rounded-3xl shadow-lg shadow-slate-200/50 dark:shadow-black/20">
                 <table className="w-full text-left">
                     <thead className="border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th className="p-4"><input type="checkbox" onChange={handleSelectAll} checked={selectedReceipts.size === filteredReceipts.length && filteredReceipts.length > 0} /></th>
+                            <th className="p-4"><input type="checkbox" onChange={handleSelectAll} checked={selectedReceipts.size === filteredReceipts.length && filteredReceipts.length > 0} className="rounded" /></th>
                             <th className={`p-4 font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('receiptId')}</th>
                             <th className={`p-4 font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('customerName')}</th>
                             <th className={`p-4 font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('date')}</th>
@@ -133,10 +127,10 @@ const Dashboard: React.FC = () => {
                     </thead>
                     <tbody>
                         {filteredReceipts.map(receipt => (
-                            <tr key={receipt.id} className="border-b border-slate-200 dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                <td className="p-4"><input type="checkbox" checked={selectedReceipts.has(receipt.id!)} onChange={() => handleSelectReceipt(receipt.id!)} /></td>
+                            <tr key={receipt.id} className="border-b border-slate-200 dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                <td className="p-4"><input type="checkbox" checked={selectedReceipts.has(receipt.id!)} onChange={() => handleSelectReceipt(receipt.id!)} className="rounded" /></td>
                                 <td className="p-4 font-mono text-sm">{receipt.receiptId}</td>
-                                <td className="p-4">{receipt.customerName}</td>
+                                <td className="p-4 font-medium">{receipt.customerName}</td>
                                 <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{new Date(receipt.date).toLocaleDateString()}</td>
                                 <td className="p-4 text-right font-semibold">{calculateTotal(receipt).toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</td>
                                 <td className="p-4">
@@ -147,9 +141,17 @@ const Dashboard: React.FC = () => {
                                 </td>
                             </tr>
                         ))}
+                         {filteredReceipts.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="text-center p-8 text-slate-500 dark:text-slate-400">
+                                    No receipts found.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
+            <FAB onClick={handleNewReceipt} icon="add" label={t('newReceipt')} />
         </div>
     );
     

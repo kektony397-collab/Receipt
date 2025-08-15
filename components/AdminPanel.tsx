@@ -13,8 +13,8 @@ const AdminPanel: React.FC = () => {
     const [statusMessage, setStatusMessage] = useState('');
 
     const labelClasses = "block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1";
-    const inputFieldClasses = "w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500";
-    const inputFieldDisabledClasses = "w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed";
+    const inputFieldClasses = "w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors";
+    const inputFieldDisabledClasses = "w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed";
 
     useEffect(() => {
         if (adminProfile) {
@@ -47,14 +47,14 @@ const AdminPanel: React.FC = () => {
         }
     };
 
-    if (!profile) {
-        return <div>Loading...</div>;
+    if (!adminProfile) {
+        return <div className="p-8 text-center">Loading...</div>;
     }
 
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto">
-             <h2 className={`text-3xl font-bold mb-6 ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('adminPanel')}</h2>
-            <form onSubmit={handleUpdate} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
+             <h2 className={`text-3xl font-bold font-poppins mb-6 ${language === 'gu' ? 'font-gujarati' : ''}`}>{t('adminPanel')}</h2>
+            <form onSubmit={handleUpdate} className="bg-white dark:bg-slate-800/50 p-8 rounded-3xl shadow-lg shadow-slate-200/50 dark:shadow-black/20 space-y-8">
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -68,7 +68,7 @@ const AdminPanel: React.FC = () => {
                 </div>
 
                 <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                     <h3 className="text-xl font-bold mb-4">English Details</h3>
+                     <h3 className="text-xl font-bold font-poppins mb-4">English Details</h3>
                      <div className="space-y-4">
                         <div>
                              <label className={labelClasses}>{t('organizationName')}</label>
@@ -82,7 +82,7 @@ const AdminPanel: React.FC = () => {
                 </div>
 
                 <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                     <h3 className="text-xl font-bold mb-4 font-gujarati">ગુજરાતી વિગતો</h3>
+                     <h3 className="text-xl font-bold font-poppins font-gujarati">ગુજરાતી વિગતો</h3>
                      <div className="space-y-4 font-gujarati">
                         <div>
                              <label className={labelClasses}>{t('organizationName')}</label>
@@ -102,8 +102,8 @@ const AdminPanel: React.FC = () => {
 
 
                 <div className="flex justify-end items-center gap-4 pt-6">
-                     {statusMessage && <p className="text-green-600 dark:text-green-400 flex items-center gap-2"><Icon name="check_circle"/> {statusMessage}</p>}
-                    <button type="submit" className={`flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-bold ${language === 'gu' ? 'font-gujarati' : ''}`}>
+                     {statusMessage && <p className="text-green-600 dark:text-green-400 flex items-center gap-2 animate-fade-in"><Icon name="check_circle"/> {statusMessage}</p>}
+                    <button type="submit" className={`flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-md hover:shadow-lg transition-all ${language === 'gu' ? 'font-gujarati' : ''}`}>
                          <Icon name="save"/> {t('updateProfile')}
                     </button>
                 </div>

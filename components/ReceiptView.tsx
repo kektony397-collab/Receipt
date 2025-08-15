@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Receipt, AdminProfile, Language } from '../types';
 import { calculateTotal } from '../services/db';
@@ -24,95 +23,99 @@ const ReceiptView = React.forwardRef<HTMLDivElement, ReceiptViewProps>(({ receip
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
         });
     }
 
     return (
-        <div ref={ref} className={`p-8 bg-white text-black max-w-2xl mx-auto ${isForPdf ? 'w-[800px]' : ''}`}>
-            <header className={`text-center border-b-2 border-black pb-4 mb-6 ${fontClass}`}>
-                <h1 className="text-3xl font-bold text-blue-800">{profile?.organizationName?.[language]}</h1>
-                <p className="text-lg font-semibold">{profile?.address?.en.includes("CO-OP") ? profile?.organizationName?.[language === 'en' ? 'gu' : 'en'].split(' ').slice(3).join(' ') : ""}</p>
-                <p className="text-sm">{profile?.address?.[language]}</p>
-                <p className="text-sm font-bold">{profile?.regNo}</p>
+        <div ref={ref} className={`bg-white text-gray-800 font-sans mx-auto ${isForPdf ? 'w-[210mm] min-h-[297mm] p-10 shadow-none' : 'p-6'}`}>
+            <header className="flex justify-between items-start pb-6 border-b-2 border-gray-200">
+                <div className={`space-y-1 ${fontClass}`}>
+                    <h1 className="text-3xl font-bold text-blue-700 font-poppins">{profile?.organizationName?.[language]}</h1>
+                    <p className="text-sm text-gray-600">{profile?.address?.en.includes("CO-OP") ? profile?.organizationName?.[language === 'en' ? 'gu' : 'en'].split(' ').slice(3).join(' ') : ""}</p>
+                    <p className="text-sm text-gray-600">{profile?.address?.[language]}</p>
+                    <p className="text-sm font-semibold text-gray-700">{profile?.regNo}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                    <h2 className={`text-4xl font-bold uppercase text-gray-400 tracking-widest font-poppins`}>{t('Receipt', 'રસીદ')}</h2>
+                    <p className="text-sm text-gray-600 mt-2"><strong className={fontClass}>{t('Receipt ID', 'રસીદ ID')}:</strong> {receipt.receiptId}</p>
+                    <p className="text-sm text-gray-600"><strong className={fontClass}>{t('Date', 'તારીખ')}:</strong> {formatDate(receipt.date)}</p>
+                </div>
             </header>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <strong className={fontClass}>{t('Receipt ID', 'રસીદ ID')}:</strong> {receipt.receiptId}
-                </div>
-                <div className="text-right">
-                    <strong className={fontClass}>{t('Date', 'તારીખ')}:</strong> {formatDate(receipt.date)}
-                </div>
-                <div>
-                    <strong className={fontClass}>{t('Customer Name', 'ગ્રાહકનું નામ')}:</strong> {receipt.customerName}
-                </div>
-                <div className="text-right">
-                    <strong className={fontClass}>{t('Block/Phone No.', 'બ્લોક/ફોન નંબર')}:</strong> {receipt.customerContact}
-                </div>
-            </div>
 
-            <table className="w-full mb-6">
-                <thead className="bg-slate-100">
-                    <tr>
-                        <th className={`p-2 text-left font-bold border-b-2 border-black ${fontClass}`}>{t('Description', 'વર્ણન')}</th>
-                        <th className={`p-2 text-right font-bold border-b-2 border-black ${fontClass}`}>{t('Quantity', 'જથ્થો')}</th>
-                        <th className={`p-2 text-right font-bold border-b-2 border-black ${fontClass}`}>{t('Unit Price', 'એકમ ભાવ')}</th>
-                        <th className={`p-2 text-right font-bold border-b-2 border-black ${fontClass}`}>{t('Total', 'કુલ')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {receipt.items.map(item => (
-                        <tr key={item.id}>
-                            <td className="p-2 border-b">{item.description}</td>
-                            <td className="p-2 text-right border-b">{item.quantity.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US')}</td>
-                            <td className="p-2 text-right border-b">{item.unitPrice.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</td>
-                            <td className="p-2 text-right border-b">{(item.quantity * item.unitPrice).toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</td>
+            <section className="my-8 grid grid-cols-2 gap-8">
+                <div className={`p-4 bg-slate-50 rounded-lg border border-slate-200 ${fontClass}`}>
+                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-2 tracking-wider">{t('Billed To', 'ગ્રાહક')}</h3>
+                    <p className="font-bold text-lg">{receipt.customerName}</p>
+                    {receipt.customerContact && <p className="text-slate-600">{receipt.customerContact}</p>}
+                </div>
+                <div className={`p-4 bg-slate-50 rounded-lg border border-slate-200 text-right ${fontClass}`}>
+                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-2 tracking-wider">{t('Payment Method', 'ચુકવણી પદ્ધતિ')}</h3>
+                    <p className="font-bold text-lg">{receipt.paymentMethod}</p>
+                </div>
+            </section>
+
+            <section>
+                <table className="w-full">
+                    <thead className="border-b-2 border-slate-300">
+                        <tr>
+                            <th className={`p-3 text-left font-bold text-sm uppercase text-slate-600 tracking-wider ${fontClass}`}>{t('Description', 'વર્ણન')}</th>
+                            <th className={`p-3 text-right font-bold text-sm uppercase text-slate-600 tracking-wider ${fontClass}`}>{t('Quantity', 'જથ્થો')}</th>
+                            <th className={`p-3 text-right font-bold text-sm uppercase text-slate-600 tracking-wider ${fontClass}`}>{t('Unit Price', 'એકમ ભાવ')}</th>
+                            <th className={`p-3 text-right font-bold text-sm uppercase text-slate-600 tracking-wider ${fontClass}`}>{t('Total', 'કુલ')}</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {receipt.items.map(item => (
+                            <tr key={item.id} className="border-b border-slate-100 last:border-none">
+                                <td className="p-3 align-top">{item.description}</td>
+                                <td className="p-3 text-right align-top">{item.quantity.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US')}</td>
+                                <td className="p-3 text-right align-top">{item.unitPrice.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</td>
+                                <td className="p-3 text-right font-semibold align-top">{(item.quantity * item.unitPrice).toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
 
-            <div className="flex justify-end">
-                <div className="w-full max-w-xs">
-                    <div className="grid grid-cols-2 gap-2 mb-1">
+            <section className="flex justify-end mt-8">
+                <div className="w-full max-w-sm space-y-2 text-gray-700">
+                    <div className="flex justify-between">
                         <strong className={fontClass}>{t('Subtotal', 'પેટાટોટલ')}:</strong>
-                        <span className="text-right">{subtotal.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
+                        <span>{subtotal.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
                     </div>
                     {receipt.discount > 0 && (
-                        <div className="grid grid-cols-2 gap-2 mb-1">
+                        <div className="flex justify-between">
                             <strong className={fontClass}>{t('Discount', 'ડિસ્કાઉન્ટ')}:</strong>
-                            <span className="text-right text-red-600">- {receipt.discount.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
+                            <span className="text-red-600">- {receipt.discount.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
                         </div>
                     )}
-                    <div className="grid grid-cols-2 gap-2 mb-1">
+                    <div className="flex justify-between">
                         <strong className={fontClass}>{t('Tax', 'કર')} ({receipt.taxRate}%):</strong>
-                        <span className="text-right">{taxAmount.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
+                        <span>{taxAmount.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t-2 border-black">
-                        <strong className={`text-xl ${fontClass}`}>{t('Grand Total', 'મહાન કુલ')}:</strong>
-                        <span className="text-right text-xl font-bold">{total.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
+                    <div className="flex justify-between mt-3 pt-3 border-t-2 border-black text-2xl font-bold text-black">
+                        <strong className={fontClass}>{t('Grand Total', 'મહાન કુલ')}:</strong>
+                        <span>{total.toLocaleString(language === 'gu' ? 'gu-IN' : 'en-US', { style: 'currency', currency: 'INR' })}</span>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div className="mt-8">
+            <footer className={`mt-16 pt-8 border-t border-gray-200 ${isForPdf ? '' : 'mb-8'}`}>
                 {receipt.notes && (
-                    <div>
-                        <strong className={fontClass}>{t('Notes', 'નોંધો')}:</strong>
-                        <p className="text-sm italic">{receipt.notes}</p>
+                    <div className="mb-8">
+                        <strong className={`${fontClass} text-sm text-gray-500 uppercase tracking-wider`}>{t('Notes', 'નોંધો')}:</strong>
+                        <p className="text-sm italic text-gray-600 mt-1">{receipt.notes}</p>
                     </div>
                 )}
-                 <div className="mt-2">
-                    <strong className={fontClass}>{t('Payment Method', 'ચુકવણી પદ્ધતિ')}:</strong>
-                    <span> {receipt.paymentMethod}</span>
+                <div className="flex justify-between items-end">
+                    <div className="text-sm text-gray-500">
+                        <p className={`font-bold ${fontClass}`}>{t('Thank you for your business!', 'તમારા વ્યવસાય બદલ આભાર!')}</p>
+                    </div>
+                    <div className="w-48 text-center">
+                        <div className="border-b border-gray-400 h-12"></div>
+                        <p className={`text-sm text-gray-600 mt-2 ${fontClass}`}>{t('Authorized Signature', 'અધિકૃત સહી')}</p>
+                    </div>
                 </div>
-            </div>
-
-            <footer className="mt-16 text-center text-sm text-slate-500">
-                <p className="mt-8 pt-8 border-t">{t('Authorized Signature', 'અધિકૃત સહી')}</p>
-                <p className="mt-4">{t('Thank you for your business!', 'તમારા વ્યવસાય બદલ આભાર!')}</p>
             </footer>
         </div>
     );
