@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Bilingual Receipt Generator",
+  "description": "A single-page, offline-capable web app for generating, storing and exporting professional receipts in English and Gujarati. It uses IndexedDB for local storage and supports PDF and Excel exports.",
+  "requestFramePermissions": []
+}
